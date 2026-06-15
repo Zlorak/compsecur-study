@@ -223,7 +223,7 @@ function renderFlashcards() {
 function renderPorts() {
   const wrap = el(`<div></div>`);
   wrap.appendChild(el(`<input class="search" id="portsearch" placeholder="Search service or port… (e.g. ssh, 443, ldap)" />`));
-  const card = el(`<div class="card" style="padding:0;overflow:hidden"></div>`);
+  const card = el(`<div class="card" style="padding:0;overflow-x:auto"></div>`);
   const table = el(`
     <table>
       <thead><tr><th>Port</th><th>Proto</th><th>Service</th><th>Notes</th></tr></thead>

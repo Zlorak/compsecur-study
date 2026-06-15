@@ -24,6 +24,8 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* ---------- top bar ---------- */
@@ -265,8 +267,31 @@ tr:hover td { background: var(--panel); }
 
 @media (max-width: 560px) {
   .ref-grid { grid-template-columns: 1fr; }
-  main { padding: 16px 14px 80px; }
+  main { padding: 16px 14px 84px; }
   .card { padding: 18px; }
+
+  /* tighter header, full-width nav */
+  .topbar { padding: 12px 14px; }
+  .modes { width: 100%; }
+  .mode-btn { flex: 1 1 auto; text-align: center; padding: 8px 10px; }
+
+  /* inputs at 16px stop iOS from zooming on focus */
+  select, .btn, .search { font-size: 16px; }
+
+  /* ports table: scroll horizontally, don't pin the header off-screen */
+  th { position: static; }
+  td, th { padding: 9px 10px; white-space: nowrap; }
+  td:last-child, th:last-child { white-space: normal; min-width: 200px; }
+
+  /* PBQ rows stack the dropdown under the prompt */
+  .pbq-row { flex-wrap: wrap; }
+  .pbq-left { flex: 1 1 100%; }
+  .pbq-select, .pbq-num { width: 100%; min-width: 0; }
+  .pbq-ans { white-space: normal; }
+
+  /* keep the fixed footer from crowding text */
+  .footer { font-size: 11px; padding: 7px 14px; gap: 10px; }
+  .footer span:first-child { white-space: nowrap; }
 }
 
 .footer {
