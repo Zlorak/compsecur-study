@@ -222,7 +222,7 @@ select:focus, .btn:focus { outline: 2px solid var(--accent-dim); }
 }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; position: sticky; top: 73px; background: var(--bg); }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; background: var(--panel); }
 td.port { font-family: var(--mono); color: var(--accent); font-weight: 600; }
 td .tcp { color: var(--good); font-size: 11px; }
 td .udp { color: var(--warn); font-size: 11px; }
@@ -278,8 +278,7 @@ tr:hover td { background: var(--panel); }
   /* inputs at 16px stop iOS from zooming on focus */
   select, .btn, .search { font-size: 16px; }
 
-  /* ports table: scroll horizontally, don't pin the header off-screen */
-  th { position: static; }
+  /* ports table: scroll horizontally on small screens */
   td, th { padding: 9px 10px; white-space: nowrap; }
   td:last-child, th:last-child { white-space: normal; min-width: 200px; }
 
