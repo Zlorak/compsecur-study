@@ -380,7 +380,38 @@ function finishMock() {
   mock.done = true;
   mock.finishedAt = Date.now();
   if (mock.timer) clearInterval(mock.timer);
+  saveMockResult();
   if (currentMode === "mock") render();
+}
+
+function computeMockScore() {
+  const total = mock.exam.length;
+  let correct = 0;
+  const perDom = {};
+  DOMAINS.forEach(d => perDom[d.id] = { c: 0, t: 0 });
+  mock.exam.forEach((it, i) => {
+    const ok = mock.answers[i] === it.q.a;
+    if (ok) correct++;
+    const dom = catDomain[it.q.cat];
+    if (dom) { perDom[dom.id].t++; if (ok) perDom[dom.id].c++; }
+  });
+  return { total, correct, perDom, pct: Math.round((correct / total) * 100) };
+}
+
+function saveMockResult() {
+  const { total, correct, perDom, pct } = computeMockScore();
+  const rec = {
+    at: Date.now(),
+    correct, total, pct,
+    pass: pct >= PASS_PCT,
+    seconds: Math.round((mock.finishedAt - mock.startedAt) / 1000),
+    dom: Object.fromEntries(DOMAINS.map(d => [d.id, { c: perDom[d.id].c, t: perDom[d.id].t }])),
+  };
+  if (!state.mockHistory) state.mockHistory = [];
+  state.mockHistory.push(rec);
+  if (state.mockHistory.length > 50) state.mockHistory = state.mockHistory.slice(-50);
+  saveState(state);
+  mock.attempt = state.mockHistory.length;
 }
 
 function renderMock() {
@@ -399,6 +430,61 @@ function renderMockStart() {
   const start = el(`<button class="btn btn-primary">Start exam →</button>`);
   start.addEventListener("click", startMock);
   const row = el(`<div class="nav-row"></div>`); row.appendChild(start); card.appendChild(row);
+  app.appendChild(card);
+  renderMockHistory();
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const mo = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getMonth()];
+  return `${mo} ${d.getDate()}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+function renderMockHistory() {
+  const hist = state.mockHistory || [];
+  if (!hist.length) return;
+  const recent = hist.slice(-12);
+  const best = Math.max(...hist.map(h => h.pct));
+  const avgLast = Math.round(hist.slice(-5).reduce((s, h) => s + h.pct, 0) / Math.min(5, hist.length));
+  const passes = hist.filter(h => h.pass).length;
+
+  const card = el(`<div class="card" style="margin-top:16px"></div>`);
+  const header = el(`<div class="toolbar"></div>`);
+  header.appendChild(el(`<div class="qtext" style="font-size:16px;margin:0">Score history</div>`));
+  header.appendChild(el(`<div class="spacer"></div>`));
+  const clear = el(`<button class="btn">Clear</button>`);
+  clear.addEventListener("click", () => { if (confirm("Delete all mock-exam history?")) { state.mockHistory = []; saveState(state); render(); } });
+  header.appendChild(clear);
+  card.appendChild(header);
+
+  card.appendChild(el(`<div class="scorebar">
+      <div class="stat"><div class="num">${hist.length}</div><div class="lbl">Attempts</div></div>
+      <div class="stat"><div class="num acc">${best}%</div><div class="lbl">Best</div></div>
+      <div class="stat"><div class="num">${avgLast}%</div><div class="lbl">Avg (last 5)</div></div>
+      <div class="stat"><div class="num good">${passes}</div><div class="lbl">Passes</div></div>
+    </div>`));
+
+  const chartWrap = el(`<div class="hist-chart-wrap"></div>`);
+  chartWrap.appendChild(el(`<div class="hist-passline" style="bottom:${PASS_PCT}%"><span>${PASS_PCT}%</span></div>`));
+  const chart = el(`<div class="hist-chart"></div>`);
+  recent.forEach((h, i) => {
+    const n = hist.length - recent.length + i + 1;
+    chart.appendChild(el(`<div class="hist-bar ${h.pass ? "pass" : "fail"}" style="height:${Math.max(6, h.pct)}%" title="Attempt #${n}: ${h.pct}% — ${formatDate(h.at)}"></div>`));
+  });
+  chartWrap.appendChild(chart);
+  card.appendChild(chartWrap);
+
+  const list = el(`<div class="hist-list"></div>`);
+  hist.slice(-8).reverse().forEach((h, idx) => {
+    const n = hist.length - idx;
+    list.appendChild(el(`<div class="hist-row">
+        <span class="hist-when">#${n} · ${formatDate(h.at)}</span>
+        <span class="hist-pct">${h.correct}/${h.total} · ${h.pct}%</span>
+        <span class="result-badge ${h.pass ? "badge-pass" : "badge-fail"}" style="font-size:10px;padding:2px 8px">${h.pass ? "PASS" : "FAIL"}</span>
+      </div>`));
+  });
+  card.appendChild(list);
+
   app.appendChild(card);
 }
 
@@ -468,25 +554,18 @@ function renderMockExam() {
 }
 
 function renderMockResults() {
-  const total = mock.exam.length;
-  let correct = 0;
-  const perDom = {};
-  DOMAINS.forEach(d => perDom[d.id] = { c: 0, t: 0 });
-  mock.exam.forEach((it, i) => {
-    const ok = mock.answers[i] === it.q.a;
-    if (ok) correct++;
-    const dom = catDomain[it.q.cat];
-    if (dom) { perDom[dom.id].t++; if (ok) perDom[dom.id].c++; }
-  });
-  const pct = Math.round((correct / total) * 100);
+  const { total, correct, perDom, pct } = computeMockScore();
   const pass = pct >= PASS_PCT;
   const usedSec = Math.round(((mock.finishedAt || Date.now()) - mock.startedAt) / 1000);
+  const hist = state.mockHistory || [];
+  const best = hist.length ? Math.max(...hist.map(h => h.pct)) : pct;
 
   const wrap = el(`<div></div>`);
   const head = el(`<div class="card" style="text-align:center"></div>`);
   head.appendChild(el(`<div class="result-badge ${pass ? "badge-pass" : "badge-fail"}">${pass ? "PASS" : "FAIL"}</div>`));
   head.appendChild(el(`<div style="font-size:40px;font-weight:800;margin:8px 0">${pct}%</div>`));
   head.appendChild(el(`<div style="color:var(--muted)">${correct} / ${total} correct · time used ${fmtTime(usedSec)} · pass ≈ ${PASS_PCT}%</div>`));
+  if (mock.attempt) head.appendChild(el(`<div style="color:var(--muted);font-size:13px;margin-top:4px">Attempt #${mock.attempt} · best ${best}%</div>`));
   wrap.appendChild(head);
 
   const dc = el(`<div class="card" style="margin-top:16px"></div>`);

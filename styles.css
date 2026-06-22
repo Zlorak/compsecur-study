@@ -282,6 +282,19 @@ tr:hover td { background: var(--panel); }
 .ds-fill { height: 100%; }
 .ds-num { text-align: right; color: var(--muted); font-family: var(--mono); }
 
+/* ---------- mock score history ---------- */
+.hist-chart-wrap { position: relative; margin: 6px 0 18px; }
+.hist-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; border-bottom: 1px solid var(--border); }
+.hist-bar { flex: 1; min-width: 8px; border-radius: 4px 4px 0 0; background: var(--accent-dim); transition: height .3s; }
+.hist-bar.pass { background: var(--good); }
+.hist-bar.fail { background: var(--warn); }
+.hist-passline { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--muted); opacity: .55; pointer-events: none; }
+.hist-passline span { position: absolute; right: 0; top: -8px; font-size: 10px; color: var(--muted); background: var(--panel); padding: 0 4px; }
+.hist-list { display: flex; flex-direction: column; gap: 6px; }
+.hist-row { display: flex; align-items: center; gap: 10px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+.hist-when { color: var(--muted); }
+.hist-pct { margin-left: auto; font-family: var(--mono); }
+
 /* ---------- progress / setup ---------- */
 .setup-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 16px 0; }
 .cat-toggle {
